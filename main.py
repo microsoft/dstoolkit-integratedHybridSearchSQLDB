@@ -2,7 +2,7 @@
 # Chunking and vectorization is done by integrated vectorization in Azure AI Search.
 
 import openai 
-import pydoc
+import pyodbc
 import numpy
 import pandas
 import os
@@ -31,8 +31,8 @@ sql_driver = os.environ.get("SQL_DRIVER")
 
 #Azure SQL Connection string
 connection_string = f"DRIVER={sql_driver};SERVER={sql_server};DATABASE={database_name};UID={username};PWD={password}"
-
-co = pydoc.conncetion(connection_string, autocommit=True)
+print(connection_string)
+co = pyodbc.connect(connection_string)
 cursor = co.cursor()
 
 
@@ -43,8 +43,7 @@ cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
 #Create table
 cursor.execute(f"""
                CREATE TABLE {table_name}
-               (Id int NOT NULL,
-               CONSTRAINT PK_{table_name} PRIMARY KEY (Id),
+               (ID INT IDENTITY(1,1) NOT NULL PRIMARY KEY, 
                Year int,
                Discipline text,
                Winner text,
@@ -53,9 +52,28 @@ cursor.execute(f"""
 
 print("Created new table nobel_prize_winner")
 
-cursor.execute(f"CREATE INDEX idx ON {table_name} (Id)")
-print("Created SQL index")
+#create a sql index?
 
 #Load data into the table
-csv_file  = pandas.read_csv("./data/nobel_prize_winner.csv")
 
+data  = pandas.read_csv("./data/nobel-prize-winners.csv")
+df = pandas.DataFrame(data)
+
+for row in df.itertuples():
+    yearentry = row.year
+    disciplineentry = row.discipline
+    winnerentry = row.winner
+    descentry = str(row.desc)
+        
+    cursor.execute("""
+                   INSERT INTO nobel_prize_winner (Year, Discipline, Winner, Description)
+                   VALUES (?,?,?,?)
+                   """,
+                   yearentry,
+                   disciplineentry,
+                   winnerentry,
+                   descentry
+                   )
+co.commit()
+    
+print("Data loaded into SQL table")
