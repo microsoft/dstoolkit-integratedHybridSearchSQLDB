@@ -164,3 +164,7 @@ cython_debug/
 .terraform.lock.hcl
 terraform*
 main.tfplan
+
+
+#shellscript
+setenv.sh
