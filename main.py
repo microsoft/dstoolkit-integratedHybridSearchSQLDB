@@ -3,7 +3,6 @@
 
 import openai 
 import pyodbc
-import numpy
 import pandas
 import os
 
@@ -11,14 +10,17 @@ import os
 import azure.core.credentials
 import azure.search.documents
 import azure.search.documents.indexes    
-from azure.search.documents.indexes import SearchIndexClient, SearchIndexerClient  
-from azure.search.documents.indexes.models import SearchIndexerDataContainer, SearchIndexerDataSourceConnection
-
+from azure.search.documents.indexes import SearchIndexerClient  
+from azure.search.documents.indexes.models import (
+    SearchIndexerDataContainer, SearchIndexerDataSourceConnection, SearchField, SearchFieldDataType, 
+    VectorSearch, HnswAlgorithmConfiguration, VectorSearchAlgorithmKind, VectorSearchProfile, AzureOpenAIVectorizer, 
+    AzureOpenAIParameters, SearchIndex, HnswParameters, SearchableField)
+from azure.search.documents.indexes import SearchIndexClient
 
 #OpenAI vars
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_type = os.environ.get("OPENAI_API_TYPE")
-openai.api_version = os.environ.get("OPENAI_API_VERSION")
+openai_uri = os.environ.get("OPENAI_URI")
 openai_deployment = os.environ.get("OPENAI_DEPLOYMENT")
 
 #AI Search vars
@@ -100,3 +102,67 @@ data_source_connection = SearchIndexerDataSourceConnection(
 )
 
 datacon = aisearch.create_or_update_data_source_connection(data_source_connection)
+
+#create indexer with vector search configuration
+#1. create fiels
+#2. create indexer
+
+#indexerfields
+#id, chunk, vector 
+#parameters of chunks
+#db_table_id, db_table_year, db_table_discipline, db_table_winner, db_table_description 
+#parameters of Azure SQL DB table
+#latest implementation reference: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/samples/sample_vector_search.py
+fields = [
+    SearchableField(name="Id", type=SearchFieldDataType.String, key=True),
+    SearchableField(name="chunk", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
+    SearchableField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), vector_search_dimensions=embedding_length, vector_search_profile_name="vectorsearch-profile"),
+    SearchableField(name="db_table_id", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
+    SearchableField(name="db_table_year", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchableField(name="db_table_discipline", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchableField(name="db_table_winner", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchableField(name="db_table_description", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False)
+]
+
+vector_search_config = VectorSearch(
+    
+    profiles=[ 
+        VectorSearchProfile(
+            name="vectorsearch-profile",
+            algorithm_configuration_name="hnsw-config",
+            #vectorizer="openai-ada" #can not find vectorizer?
+        )
+    ], #at least azure-search-documents 11.6.0b1 (preview in March 26, 2024). See https://pypi.org/project/azure-search-documents/#history
+    algorithms=[
+        HnswAlgorithmConfiguration(
+            name="hnsw-config"
+        )
+
+    ],#there is no vectorizer in this version...
+    vectorizer=[
+        AzureOpenAIVectorizer(
+            name="openai-ada",
+            kind="azureOpenAI",
+            azure_open_ai_parameters=AzureOpenAIParameters(
+                resource_uri=openai_uri,
+                deployment_id=openai_deployment,
+                api_key=openai.api_key,
+            )
+                
+        )
+    ]
+)
+    
+#TODO semantic configuration?
+aisearch_client = SearchIndexClient(service_endpoint, azure.core.credentials.AzureKeyCredential(aisearch_key))
+#Create search index with vector search configuration
+try:
+    search_index = SearchIndex(name=index_name, fields=fields, vector_search=vector_search_config)
+    search_index_response = aisearch_client.create_or_update_index(search_index)
+    print("indexer created successfully!") 
+except Exception as e:
+    print(e)
+
+    
+
+
