@@ -7,6 +7,13 @@ import numpy
 import pandas
 import os
 
+#AISearch imports
+import azure.core.credentials
+import azure.search.documents
+import azure.search.documents.indexes    
+from azure.search.documents.indexes import SearchIndexClient, SearchIndexerClient  
+from azure.search.documents.indexes.models import SearchIndexerDataContainer, SearchIndexerDataSourceConnection
+
 
 #OpenAI vars
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -36,7 +43,7 @@ co = pyodbc.connect(connection_string)
 cursor = co.cursor()
 
 
-table_name = "nobel_prize_winner"
+table_name = "nobelprizewinners"
 #drop if table exists
 cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
 
@@ -50,7 +57,7 @@ cursor.execute(f"""
                Description text);
                """)
 
-print("Created new table nobel_prize_winner")
+print("Created new table "+ table_name) 
 
 #create a sql index?
 
@@ -77,3 +84,19 @@ for row in df.itertuples():
 co.commit()
     
 print("Data loaded into SQL table")
+
+#Azure SQL TCP connection string for Azure AI Search integration
+#create connection between Azure SQL and Azure AI Search
+sqltcpcon = f'Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Server=tcp:{sql_server};Database={database_name};User ID={username};Password={password};'
+
+aisearch = SearchIndexerClient(service_endpoint, azure.core.credentials.AzureKeyCredential(aisearch_key))
+search_container = SearchIndexerDataContainer(name=table_name)
+
+data_source_connection = SearchIndexerDataSourceConnection(
+    name=f"{table_name}-azuresqlcon",
+    type="azuresql",
+    connection_string=sqltcpcon,
+    container=search_container
+)
+
+datacon = aisearch.create_or_update_data_source_connection(data_source_connection)
