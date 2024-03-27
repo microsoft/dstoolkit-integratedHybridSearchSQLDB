@@ -6,7 +6,7 @@
 
 import azuresql
 import index
-
+import skillset
 
 # #OpenAI vars
 # openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -28,8 +28,9 @@ import index
 # sql_driver = os.environ.get("SQL_DRIVER")
 
 #create a new Azure SQL database and loads data from a CSV file into the database.
-azuresql.create_db_and_aisearch_connection()
+#azuresql.create_db_and_aisearch_connection()
 
 #create indexer with vector search configuration
 index.create_index()
 
+skillset.createSkillset()

@@ -33,14 +33,14 @@ openai_deployment = os.environ.get("OPENAI_DEPLOYMENT")
 #latest implementation reference: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/samples/sample_vector_search.py
 def create_index():
     fields = [
-    SearchField(name="Id", type=SearchFieldDataType.String, key=True),
+    SearchField(name="Id", type=SearchFieldDataType.String, key=True, analyzer_name="keyword"),
     SearchField(name="chunk", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
     SearchField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), vector_search_dimensions=embedding_length, vector_search_profile_name="vectorsearch-profile"),
-    SearchField(name="db_table_id", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
+    SearchField(name="db_table_id", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
     SearchField(name="db_table_year", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
     SearchField(name="db_table_discipline", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
     SearchField(name="db_table_winner", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
-    SearchField(name="db_table_description", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False)
+    SearchField(name="db_table_description", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True)
 ]
 
     vector_search_config = VectorSearch(
