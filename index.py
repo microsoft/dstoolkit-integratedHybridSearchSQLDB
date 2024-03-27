@@ -6,7 +6,7 @@ import azure.search.documents.indexes
 from azure.search.documents.indexes.models import (
     SearchField, SearchFieldDataType, 
     VectorSearch, HnswAlgorithmConfiguration, VectorSearchProfile, AzureOpenAIVectorizer, 
-    AzureOpenAIParameters, SearchIndex)
+    AzureOpenAIParameters, SearchIndex, HnswParameters, VectorSearchAlgorithmMetric)
 from azure.search.documents.indexes import SearchIndexClient
 
 #AI Search vars
@@ -54,7 +54,13 @@ def create_index():
     ], #at least azure-search-documents 11.6.0b1 (preview in March 26, 2024). See https://pypi.org/project/azure-search-documents/#history
     algorithms=[
         HnswAlgorithmConfiguration(
-            name="hnsw-config"
+            name="hnsw-config",
+            parameters=HnswParameters(  
+                m=4,  
+                ef_construction=400,  
+                ef_search=500,  
+                metric=VectorSearchAlgorithmMetric.COSINE,  
+            ),  
         )
 
     ],
