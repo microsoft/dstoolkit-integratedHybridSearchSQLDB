@@ -32,7 +32,7 @@ resource "azurerm_mssql_database" "db" {
   name = "sqldb-hybrid"
   server_id = azurerm_mssql_server.server.id
 }
-
+#TODO: Add access for Azure services?
 resource "azurerm_mssql_firewall_rule" "firewallrule" {
   name                = "AllowIpRangeFromTF"
   server_id           = azurerm_mssql_server.server.id
