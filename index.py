@@ -6,7 +6,8 @@ import azure.search.documents.indexes
 from azure.search.documents.indexes.models import (
     SearchField, SearchFieldDataType, 
     VectorSearch, HnswAlgorithmConfiguration, VectorSearchProfile, AzureOpenAIVectorizer, 
-    AzureOpenAIParameters, SearchIndex, HnswParameters, VectorSearchAlgorithmMetric)
+    AzureOpenAIParameters, SearchIndex, HnswParameters, VectorSearchAlgorithmMetric, SemanticConfiguration, SemanticPrioritizedFields, 
+    SemanticField, SemanticSearch)
 from azure.search.documents.indexes import SearchIndexClient
 
 #AI Search vars
@@ -78,11 +79,20 @@ def create_index():
     ]
 )
     
-    #TODO semantic configuration?
+    #add semantic configuration
+    semantic_search_config = SemanticConfiguration(
+        name=f"{index_name}-semantic",
+        prioritized_fields=SemanticPrioritizedFields(
+            content_fields=[SemanticField(field_name="chunk")]
+        )
+    )
+    
+    semantic_search = SemanticSearch(configurations=[semantic_search_config]) 
+    
     aisearch_client = SearchIndexClient(service_endpoint, azure.core.credentials.AzureKeyCredential(aisearch_key))
     #Create search index with vector search configuration
     try:
-        search_index = SearchIndex(name=index_name, fields=fields, vector_search=vector_search_config)
+        search_index = SearchIndex(name=index_name, fields=fields, vector_search=vector_search_config, semantic_search=semantic_search)
         search_index_response = aisearch_client.create_or_update_index(search_index)
         print("indexer created successfully!") 
     except Exception as e:
