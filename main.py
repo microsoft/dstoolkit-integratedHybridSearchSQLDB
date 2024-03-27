@@ -114,14 +114,14 @@ datacon = aisearch.create_or_update_data_source_connection(data_source_connectio
 #parameters of Azure SQL DB table
 #latest implementation reference: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/samples/sample_vector_search.py
 fields = [
-    SearchableField(name="Id", type=SearchFieldDataType.String, key=True),
-    SearchableField(name="chunk", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
-    SearchableField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), vector_search_dimensions=embedding_length, vector_search_profile_name="vectorsearch-profile"),
-    SearchableField(name="db_table_id", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
-    SearchableField(name="db_table_year", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
-    SearchableField(name="db_table_discipline", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
-    SearchableField(name="db_table_winner", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
-    SearchableField(name="db_table_description", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False)
+    SearchField(name="Id", type=SearchFieldDataType.String, key=True),
+    SearchField(name="chunk", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
+    SearchField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), vector_search_dimensions=embedding_length, vector_search_profile_name="vectorsearch-profile"),
+    SearchField(name="db_table_id", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
+    SearchField(name="db_table_year", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchField(name="db_table_discipline", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchField(name="db_table_winner", type=SearchFieldDataType.String, sortable=True, filterable=True, facetable=True),
+    SearchField(name="db_table_description", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False)
 ]
 
 vector_search_config = VectorSearch(
@@ -130,7 +130,7 @@ vector_search_config = VectorSearch(
         VectorSearchProfile(
             name="vectorsearch-profile",
             algorithm_configuration_name="hnsw-config",
-            #vectorizer="openai-ada" #can not find vectorizer?
+            vectorizer="openai-ada" #can not find vectorizer?
         )
     ], #at least azure-search-documents 11.6.0b1 (preview in March 26, 2024). See https://pypi.org/project/azure-search-documents/#history
     algorithms=[
@@ -139,7 +139,7 @@ vector_search_config = VectorSearch(
         )
 
     ],#there is no vectorizer in this version...
-    vectorizer=[
+    vectorizers=[
         AzureOpenAIVectorizer(
             name="openai-ada",
             kind="azureOpenAI",
@@ -148,7 +148,7 @@ vector_search_config = VectorSearch(
                 deployment_id=openai_deployment,
                 api_key=openai.api_key,
             )
-                
+
         )
     ]
 )
