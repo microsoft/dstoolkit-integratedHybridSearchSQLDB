@@ -24,7 +24,7 @@ resource "random_string" "random" {
 
 resource "azurerm_resource_group" "rg"{
   name  = "aisearch-sql-integrated"
-  location = "East US"
+  location = "Switzerland North"
 }
 #Action needed: add sql credentials
 resource "azurerm_mssql_server" "server"{
