@@ -29,7 +29,7 @@ def createSkillset():
         maximum_page_length=300,
         page_overlap_length=20,
         inputs=[
-            InputFieldMappingEntry(name="text", source="/document/content")
+            InputFieldMappingEntry(name="text", source="/document/Description")
         ],
         outputs=[
             OutputFieldMappingEntry(name="textItems", target_name="pages")

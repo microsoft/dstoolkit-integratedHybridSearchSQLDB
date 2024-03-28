@@ -66,7 +66,7 @@ def create_db_and_aisearch_connection():
         descentry = str(row.desc)
             
         cursor.execute("""
-                    INSERT INTO nobel_prize_winner (Year, Discipline, Winner, Description)
+                    INSERT INTO nobelprizewinners (Year, Discipline, Winner, Description)
                     VALUES (?,?,?,?)
                     """,
                     yearentry,

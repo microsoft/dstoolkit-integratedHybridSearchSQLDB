@@ -13,12 +13,20 @@ terraform {
 provider "azurerm" {
   features {}
 }
+resource "random_string" "random" {
+  length = 8
+  special = false
+  lower = true
+  upper = false
+  override_special = "/@£$"
+}
+
 
 resource "azurerm_resource_group" "rg"{
   name  = "aisearch-sql-integrated"
   location = "East US"
 }
-
+#Action needed: add sql credentials
 resource "azurerm_mssql_server" "server"{
   name                       = "sqlserver-hybrid"
   resource_group_name        = azurerm_resource_group.rg.name
@@ -32,7 +40,7 @@ resource "azurerm_mssql_database" "db" {
   name = "sqldb-hybrid"
   server_id = azurerm_mssql_server.server.id
 }
-#TODO: Add access for Azure services?
+#Action needed: add your local client ip address
 resource "azurerm_mssql_firewall_rule" "firewallrule" {
   name                = "AllowIpRangeFromTF"
   server_id           = azurerm_mssql_server.server.id
@@ -40,10 +48,18 @@ resource "azurerm_mssql_firewall_rule" "firewallrule" {
   end_ip_address   = "" #replace the IP addresses with your own (range)
   
   }
+  #allow all azure services to access the sql server
+  resource "azurerm_mssql_firewall_rule" "allow_azure_services" {
+  name                = "AllowAzureServices"
+  server_id           = azurerm_mssql_server.server.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+  
+  }
 
   #Azure OpenAI
   resource "azurerm_cognitive_account" "openai" {
-    name                = "openaiaccount"
+    name                = "${random_string.random.result}-openaiaccount"
     resource_group_name = azurerm_resource_group.rg.name
     location            = azurerm_resource_group.rg.location
     kind                = "OpenAI"
@@ -66,7 +82,7 @@ resource "azurerm_mssql_firewall_rule" "firewallrule" {
   
   #Azure AI Search
   resource "azurerm_search_service" "search" {
-    name                = "aisearch"
+    name                = "${random_string.random.result}-aisearch"
     resource_group_name = azurerm_resource_group.rg.name
     location            = azurerm_resource_group.rg.location
     sku                 = "basic"
