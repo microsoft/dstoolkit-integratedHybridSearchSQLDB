@@ -1,11 +1,8 @@
 # Description: This file creates a new Azure SQL database and loads data from a CSV file into the database. 
 # Afterwards it connects to Azure AI Search as a data source.
 
-import openai 
 import pyodbc
 import pandas
-import os
-
 #AISearch imports
 import azure.core.credentials
 import azure.search.documents
@@ -15,20 +12,20 @@ from azure.search.documents.indexes.models import (
     SearchIndexerDataContainer, SearchIndexerDataSourceConnection)
 
 
-#AI Search vars
-aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
-service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
-index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
-embedding_length = 1536
+# #AI Search vars
+# aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
+# service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
+# index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
+# embedding_length = 1536
 
-#Azure SQL vars
-sql_server = os.environ.get("SQL_SERVER_NAME")
-database_name = os.environ.get("SQL_DATABASE_NAME")
-username = os.environ.get("SQL_USERNAME")
-password = os.environ.get("SQL_PASSWORD")
-sql_driver = os.environ.get("SQL_DRIVER")
+# #Azure SQL vars
+# sql_server = os.environ.get("SQL_SERVER_NAME")
+# database_name = os.environ.get("SQL_DATABASE_NAME")
+# username = os.environ.get("SQL_USERNAME")
+# password = os.environ.get("SQL_PASSWORD")
+# sql_driver = os.environ.get("SQL_DRIVER")
 
-def create_db_and_aisearch_connection():
+def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server, database_name, username, password, sql_driver):
     #Azure SQL Connection string
     connection_string = f"DRIVER={sql_driver};SERVER={sql_server};DATABASE={database_name};UID={username};PWD={password}"
     print(connection_string)

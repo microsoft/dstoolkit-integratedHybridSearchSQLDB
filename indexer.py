@@ -1,15 +1,14 @@
 #file to create an indexer with index, data source and skillset.
 
 from azure.search.documents.indexes.models import SearchIndexer
-import os
 from azure.search.documents.indexes import SearchIndexerClient
 from azure.core.credentials import AzureKeyCredential
 
-service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
-index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
-aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
+# service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
+# index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
+# aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
 
-def create_indexer():
+def create_indexer(service_endpoint, index_name, aisearch_key):
     indexer_name = f"{index_name}-indexer"
 
     indexer = SearchIndexer(

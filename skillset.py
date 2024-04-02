@@ -8,17 +8,16 @@ SearchIndexerSkillset
 from azure.search.documents.indexes import SearchIndexerClient
 from azure.core.credentials import AzureKeyCredential
 import openai 
-import os
+# openai_uri = os.environ.get("OPENAI_URI")
+# openai_deployment = os.environ.get("OPENAI_DEPLOYMENT")
+# openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-openai_uri = os.environ.get("OPENAI_URI")
-openai_deployment = os.environ.get("OPENAI_DEPLOYMENT")
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+# index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
+# service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
+# aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
 
-index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
-service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
-aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
-
-def createSkillset():
+def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, service_endpoint, aisearch_key):
+    openai.api_key = openai_api_key
     skillset_name = index_name + "-skillset"
 
     #Splitskill to chunk text
