@@ -33,17 +33,22 @@ index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
 # password = os.environ.get("SQL_PASSWORD")
 # sql_driver = os.environ.get("SQL_DRIVER")
 
-#create a new Azure SQL database and loads data from a CSV file into the database.
-azuresql.create_db_and_aisearch_connection()
+runonce = False
 
-#create indexer with vector search configuration
-index.create_index()
+if not runonce:
+    #create a new Azure SQL database and loads data from a CSV file into the database.
+    azuresql.create_db_and_aisearch_connection()
 
-#create a skillset for Azure AI Search with Azure OpenAi Embedding and TextSplit
-skillset.createSkillset()
+    #create indexer with vector search configuration
+    index.create_index()
 
-#create indexer with index, data source and skillset
-indexer.create_indexer()
+    #create a skillset for Azure AI Search with Azure OpenAi Embedding and TextSplit
+    skillset.createSkillset()
+
+    #create indexer with index, data source and skillset
+    indexer.create_indexer()
+
+    runonce = True
 
 #DNS issues? https://moonape1226.medium.com/domain-resolve-error-name-or-service-not-known-forazure-openai-service-domain-c32607357e57
 #vector search
