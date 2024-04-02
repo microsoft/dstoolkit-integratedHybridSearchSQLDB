@@ -7,8 +7,9 @@ export TF_VAR_sqlusername=$(openssl rand -base64 6)
 export TF_VAR_start_ip_address=$(hostname -I | awk '{print $1}')
 export TF_VAR_end_ip_address=$(hostname -I | awk '{print $1}')
 terraform init
-terraform plan -out "main.tfplan"
-terraform apply "main.tfplan"
+# terraform plan -out "main.tfplan"
+# terraform apply "main.tfplan"
+terraform apply "main.tf"
 
 # Export all needed variables
 PREFIX=$(terraform state show random_string.random | grep "id")
