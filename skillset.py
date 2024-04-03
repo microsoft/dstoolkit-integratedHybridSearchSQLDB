@@ -1,13 +1,15 @@
-#file to create a skillset for Azure AI Search
-#with Azure OpenAi Embedding
-#with TextSplit
+#Description: This file creates a skillset for Azure AI Search including a SplitSkill and an AzureOpenAIEmbeddingSkill.
+#
+from azure.core.credentials import AzureKeyCredential
+import openai 
 from azure.search.documents.indexes.models import (  
 SplitSkill, InputFieldMappingEntry, OutputFieldMappingEntry,AzureOpenAIEmbeddingSkill, SearchIndexerIndexProjections, SearchIndexerIndexProjectionSelector,
 SearchIndexerSkillset
 )
 from azure.search.documents.indexes import SearchIndexerClient
-from azure.core.credentials import AzureKeyCredential
-import openai 
+
+#to run this code indipendently, uncomment the following lines and make sure to set your environment variables
+#
 # openai_uri = os.environ.get("OPENAI_URI")
 # openai_deployment = os.environ.get("OPENAI_DEPLOYMENT")
 # openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -16,6 +18,8 @@ import openai
 # service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
 # aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
 
+
+#function to create a skillset.
 def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, service_endpoint, aisearch_key):
     openai.api_key = openai_api_key
     skillset_name = index_name + "-skillset"

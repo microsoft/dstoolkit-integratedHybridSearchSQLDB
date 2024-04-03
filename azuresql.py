@@ -3,15 +3,13 @@
 
 import pyodbc
 import pandas
-#AISearch imports
-import azure.core.credentials
-import azure.search.documents
-import azure.search.documents.indexes    
-from azure.search.documents.indexes import SearchIndexerClient  
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.indexes import SearchIndexerClient
 from azure.search.documents.indexes.models import (
     SearchIndexerDataContainer, SearchIndexerDataSourceConnection)
 
-
+#to run this code indipendently, uncomment the following lines and make sure to set your environment variables
+#
 # #AI Search vars
 # aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
 # service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
@@ -49,9 +47,8 @@ def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server
 
     print("Created new table "+ table_name) 
 
-    #create a sql index?
 
-    #Load data into the table
+    #Load data into the Azure SQL Database table
 
     data  = pandas.read_csv("./data/nobel-prize-winners.csv")
     df = pandas.DataFrame(data)
@@ -76,10 +73,10 @@ def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server
     print("Data loaded into SQL table")
 
     #Azure SQL TCP connection string for Azure AI Search integration
-    #create connection between Azure SQL and Azure AI Search
+    #creates a connection between Azure SQL and Azure AI Search
     sqltcpcon = f'Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Server=tcp:{sql_server};Database={database_name};User ID={username};Password={password};'
 
-    aisearch = SearchIndexerClient(service_endpoint, azure.core.credentials.AzureKeyCredential(aisearch_key))
+    aisearch = SearchIndexerClient(service_endpoint, AzureKeyCredential(aisearch_key))
     search_container = SearchIndexerDataContainer(name=table_name)
 
     data_source_connection = SearchIndexerDataSourceConnection(

@@ -1,18 +1,23 @@
-# Description: This file implements a configuration for Azure AI Search hybrid search by a given Azure SQL database.
-# Chunking and vectorization is done by integrated vectorization in Azure AI Search.
+# This file imports all necessary environment variables and runs the main functions to create a new Azure SQL database,
+# load data from a CSV file into the database,
+# create an Azure AI Search index with vector search configuration,
+# create a skillset for Azure AI Search with Azure OpenAi Embedding and TextSplit,
+# and create an indexer with index, data source, and skillset.
 
-# import openai 
-# import os
 
+import os
 import azuresql
+import openai 
 import index
 import skillset
 import indexer
 from azure.search.documents import SearchClient  
-import os
 from azure.core.credentials import AzureKeyCredential 
 from azure.search.documents.models import VectorizableTextQuery 
-import openai 
+from azure.search.documents.models import (
+    QueryType,QueryCaptionType,QueryAnswerType
+)
+
 # #OpenAI vars
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_type = os.environ.get("OPENAI_API_TYPE")
@@ -32,7 +37,9 @@ username = os.environ.get("SQL_USERNAME")
 password = os.environ.get("SQL_PASSWORD")
 sql_driver = os.environ.get("SQL_DRIVER")
 
-runonce = False
+
+runonce = True
+
 
 if not runonce:
     #create a new Azure SQL database and loads data from a CSV file into the database. 
@@ -50,6 +57,8 @@ if not runonce:
     runonce = True
 
 #vector search
+#This is a sample request for a vector search. It takes a text input and returns the most similar vector from the index.
+#
 # search_input = "Einstein"
 
 # search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
@@ -66,6 +75,7 @@ if not runonce:
 #     print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
     
 #hybrid search
+#This is a sample request for a hybrid search. Additionally to the vector search, it also searches for the text input in the index.
 search_input = "Einstein"
 
 search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
@@ -80,3 +90,41 @@ results = search_client.search(
 
 for result in results:
     print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
+
+
+#This is a sample request for a hybrid search with semantic reranking.
+# search_input = "Einstein"
+# search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
+# vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
+
+# results = search_client.search(
+#     search_text=search_input,
+#     vector_queries=[vector_query],
+#     select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
+#     query_type=QueryType.SEMANTIC,
+#     semantic_configuration_name=f"{index_name}-semantic",
+#     query_caption=QueryAnswerType.EXTRACTIVE,
+#     query_answer=QueryAnswerType.EXTRACTIVE,
+#     top=2
+# )
+
+# semantic_results = results.get_answers()
+# if semantic_results:
+#     for result in semantic_results:
+#         if result.highlights:
+#             print(f"Semantic search result (highlight): {result.highlights}")
+#         else:
+#             print(f"Semantic search result: {result.text}")
+        
+#         print(f"Semantic results score:  {result.score}")
+        
+
+# for result in results:
+#     print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
+#     captions = result["@search.captions"]
+#     if captions:
+#         caption = captions[0]
+#         if caption.highlights:
+#             print(f"Caption: {caption.highlights}")
+#         else:
+#             print(f"Caption: {caption.text}")

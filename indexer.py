@@ -1,9 +1,12 @@
-#file to create an indexer with index, data source and skillset.
+#Description: Create an indexer to index data from Azure SQL DB, skillset and index.
+#Afterwards it runs the indexer.
 
 from azure.search.documents.indexes.models import SearchIndexer
 from azure.search.documents.indexes import SearchIndexerClient
 from azure.core.credentials import AzureKeyCredential
 
+#to run this code indipendently, uncomment the following lines and make sure to set your environment variables
+#
 # service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
 # index_name = os.environ.get("AZURE_SEARCH_INDEX_NAME")
 # aisearch_key = os.environ.get("AZURE_SEARCH_KEY")

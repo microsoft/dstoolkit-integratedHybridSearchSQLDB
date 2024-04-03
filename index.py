@@ -1,14 +1,17 @@
+# Description: This file creates a new index in Azure AI Search with vector search configuration and semantic search.
+#
 import openai 
-import azure.core.credentials
-import azure.search.documents
-import azure.search.documents.indexes    
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
     SearchField, SearchFieldDataType, 
     VectorSearch, HnswAlgorithmConfiguration, VectorSearchProfile, AzureOpenAIVectorizer, 
     AzureOpenAIParameters, SearchIndex, HnswParameters, VectorSearchAlgorithmMetric, SemanticConfiguration, SemanticPrioritizedFields, 
     SemanticField, SemanticSearch)
-from azure.search.documents.indexes import SearchIndexClient
 
+
+#to run this code indipendently, uncomment the following lines and make sure to set your environment variables
+#
 # #AI Search vars
 # aisearch_key = os.environ.get("AZURE_SEARCH_KEY")
 # service_endpoint = os.environ.get("AZURE_SEARCH_ENDPOINT")
@@ -30,11 +33,10 @@ from azure.search.documents.indexes import SearchIndexClient
 #parameters of chunks
 #db_table_id, db_table_year, db_table_discipline, db_table_winner, db_table_description 
 #parameters of Azure SQL DB table
-#latest implementation reference: https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/search/azure-search-documents/samples/sample_vector_search.py
 def create_index(aisearch_key, service_endpoint, index_name, embedding_length, openai_key, openai_type, openai_uri, openai_deployment):
     openai.api_key =  openai_key
     openai.api_type = openai_type
-    
+    #Defines the index fields.
     fields = [
     SearchField(name="Id", type=SearchFieldDataType.String, key=True, analyzer_name="keyword"),
     SearchField(name="chunk", type=SearchFieldDataType.String, sortable=False, filterable=False, facetable=False),
@@ -81,17 +83,17 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
     ]
     )
     
-    #add semantic configuration
+    #define semantic configuration
     semantic_search_config = SemanticConfiguration(
         name=f"{index_name}-semantic",
         prioritized_fields=SemanticPrioritizedFields(
             content_fields=[SemanticField(field_name="chunk")]
         )
     )
-    
+    #add semantic serach to the index
     semantic_search = SemanticSearch(configurations=[semantic_search_config]) 
     
-    aisearch_client = SearchIndexClient(service_endpoint, azure.core.credentials.AzureKeyCredential(aisearch_key))
+    aisearch_client = SearchIndexClient(service_endpoint, AzureKeyCredential(aisearch_key))
     #Create search index with vector search configuration
     try:
         search_index = SearchIndex(name=index_name, fields=fields, vector_search=vector_search_config, semantic_search=semantic_search)

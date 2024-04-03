@@ -13,6 +13,7 @@ terraform {
 provider "azurerm" {
   features {}
 }
+#random string generation
 resource "random_string" "random" {
   length           = 8
   special          = false
@@ -21,7 +22,8 @@ resource "random_string" "random" {
   override_special = "/@£$"
 }
 
-
+#resource group. 
+#Location is important since everyone else will inherit from here
 resource "azurerm_resource_group" "rg" {
   name     = "aisearch-sql-integrated"
   location = "Switzerland North"
@@ -35,7 +37,7 @@ resource "azurerm_mssql_server" "server" {
   administrator_login_password = ""
   version                      = "12.0"
 }
-
+#Azure SQL Database deployment
 resource "azurerm_mssql_database" "db" {
   name      = "sqldb-hybrid"
   server_id = azurerm_mssql_server.server.id
@@ -65,7 +67,7 @@ resource "azurerm_cognitive_account" "openai" {
   kind                = "OpenAI"
   sku_name            = "S0"
 }
-
+#OpenAI ada version 2 embedding 
 resource "azurerm_cognitive_deployment" "deployment" {
   name                 = "adadeployment"
   cognitive_account_id = azurerm_cognitive_account.openai.id
@@ -80,12 +82,13 @@ resource "azurerm_cognitive_deployment" "deployment" {
   }
 }
 
-#Azure AI Search
+#Azure AI Search with semantic ranker enabled
 resource "azurerm_search_service" "search" {
   name                = "${random_string.random.result}-aisearch"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "basic"
+  semantic_search_sku = "free"
   replica_count       = 1
   partition_count     = 1
 }
