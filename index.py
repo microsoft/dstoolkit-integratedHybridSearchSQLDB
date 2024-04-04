@@ -1,5 +1,6 @@
 # Description: This file creates a new index in Azure AI Search with vector search configuration and semantic search.
 #
+import logging
 import openai 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
@@ -34,6 +35,8 @@ from azure.search.documents.indexes.models import (
 #db_table_id, db_table_year, db_table_discipline, db_table_winner, db_table_description 
 #parameters of Azure SQL DB table
 def create_index(aisearch_key, service_endpoint, index_name, embedding_length, openai_key, openai_type, openai_uri, openai_deployment):
+    logging.info(f"Start creating index {index_name}")
+    
     openai.api_key =  openai_key
     openai.api_type = openai_type
     #Defines the index fields.
@@ -82,7 +85,7 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
         )
     ]
     )
-    
+    logging.info(f"Succesfully created vector search configuration. Vector search profile: {vector_search_config.profiles[0].name} and vectorizer: {vector_search_config.vectorizers[0].name}. Algorithms: {vector_search_config.algorithms[0].name}")
     #define semantic configuration
     semantic_search_config = SemanticConfiguration(
         name=f"{index_name}-semantic",
@@ -90,6 +93,8 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
             content_fields=[SemanticField(field_name="chunk")]
         )
     )
+    
+    logging.info(f"Succesfully created semantic search configuration. Semantic search profile: {semantic_search_config.name}")
     #add semantic serach to the index
     semantic_search = SemanticSearch(configurations=[semantic_search_config]) 
     
@@ -98,6 +103,6 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
     try:
         search_index = SearchIndex(name=index_name, fields=fields, vector_search=vector_search_config, semantic_search=semantic_search)
         search_index_response = aisearch_client.create_or_update_index(search_index)
-        print("indexer created successfully!") 
+        logging.info(f"Index {search_index_response.name} created successfully with vector search configuration")
     except Exception as e:
-        print(e)
+        logging.ERROR(f"Error creating index {index_name} with vector search configuration: {e}")

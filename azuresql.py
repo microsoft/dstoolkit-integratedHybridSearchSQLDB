@@ -1,6 +1,6 @@
 # Description: This file creates a new Azure SQL database and loads data from a CSV file into the database. 
 # Afterwards it connects to Azure AI Search as a data source.
-
+import logging
 import pyodbc
 import pandas
 from azure.core.credentials import AzureKeyCredential
@@ -24,14 +24,17 @@ from azure.search.documents.indexes.models import (
 # sql_driver = os.environ.get("SQL_DRIVER")
 
 def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server, database_name, username, password, sql_driver):
+    logging.info("Creating a Azure SQL DB Table and importing data from CSV file")
     #Azure SQL Connection string
     connection_string = f"DRIVER={sql_driver};SERVER={sql_server};DATABASE={database_name};UID={username};PWD={password}"
-    print(connection_string)
+    logging.info(f"Connection String for Azuer SQL DB: {connection_string}")
+    #TODO: add error handling
     co = pyodbc.connect(connection_string)
     cursor = co.cursor()
 
 
     table_name = "nobelprizewinners"
+    logging.info(f"Creating table {table_name}")
     #drop if table exists
     cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
 
@@ -45,12 +48,13 @@ def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server
                 Description text);
                 """)
 
-    print("Created new table "+ table_name) 
+    logging.info(f"Finished creating new table {table_name}") 
 
 
     #Load data into the Azure SQL Database table
-
-    data  = pandas.read_csv("./data/nobel-prize-winners.csv")
+    csv_file_path = "./data/nobel-prize-winners.csv"
+    logging.info(f"Loading data from {csv_file_path} into {table_name}")
+    data  = pandas.read_csv(csv_file_path)
     df = pandas.DataFrame(data)
 
     for row in df.itertuples():
@@ -70,12 +74,14 @@ def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server
                     )
     co.commit()
         
-    print("Data loaded into SQL table")
+    logging.info(f"Data loaded into {table_name} successfully")
 
     #Azure SQL TCP connection string for Azure AI Search integration
     #creates a connection between Azure SQL and Azure AI Search
     sqltcpcon = f'Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Server=tcp:{sql_server};Database={database_name};User ID={username};Password={password};'
-
+    logging.info(f"SQL TCP Connection String for Azure AI Search: {sqltcpcon}")
+    
+    logging.info("Creating a data source connection for Azure AI Search")
     aisearch = SearchIndexerClient(service_endpoint, AzureKeyCredential(aisearch_key))
     search_container = SearchIndexerDataContainer(name=table_name)
 
@@ -87,4 +93,4 @@ def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server
     )
 
     datacon = aisearch.create_or_update_data_source_connection(data_source_connection)
-    print("Data source connection created successfully!")
+    logging.info(f"Data source connection {datacon.name} created")
