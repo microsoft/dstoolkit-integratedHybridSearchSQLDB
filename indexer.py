@@ -1,6 +1,6 @@
 #Description: Create an indexer to index data from Azure SQL DB, skillset and index.
 #Afterwards it runs the indexer.
-
+import logging
 from azure.search.documents.indexes.models import SearchIndexer
 from azure.search.documents.indexes import SearchIndexerClient
 from azure.core.credentials import AzureKeyCredential
@@ -13,7 +13,7 @@ from azure.core.credentials import AzureKeyCredential
 
 def create_indexer(service_endpoint, index_name, aisearch_key):
     indexer_name = f"{index_name}-indexer"
-
+    logging.info(f"Start creating indexer {indexer_name}")
     indexer = SearchIndexer(
         name=indexer_name,
         description="Indexer to index data from Azure SQL DB, chunk text and vectorize it",
@@ -21,9 +21,15 @@ def create_indexer(service_endpoint, index_name, aisearch_key):
         target_index_name=index_name,
         data_source_name="nobelprizewinners-azuresqlcon" #TODO make it smarter
     )
+    logging.info(f"created indexer configuration for {indexer_name}. Skillset: {indexer.skillset_name}, Target Index: {indexer.target_index_name}, Data Source: {indexer.data_source_name}")
+    
     #TODO: need firewall rule for Azure SQL DB 
     indexer_c = SearchIndexerClient(service_endpoint, AzureKeyCredential(aisearch_key))
     indexer_result = indexer_c.create_or_update_indexer(indexer)
 
+    logging.info(f"Indexer {indexer_result.name} created")
+    
+    logging.info(f"Start running indexer {indexer_name}")
+    
     indexer_c.run_indexer(indexer_name) #add waiting time for bigger dbs, insert status check
-    print(f"{indexer_name} created")
+    logging.info(f"Running indexer {indexer_name} is finished")

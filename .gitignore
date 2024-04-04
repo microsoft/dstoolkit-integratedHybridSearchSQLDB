@@ -168,3 +168,4 @@ main.tfplan
 
 #shellscript
 setenv.sh
+debug.log

@@ -6,6 +6,8 @@
 
 
 import os
+import time
+import logging
 import azuresql
 import openai 
 import index
@@ -15,8 +17,31 @@ from azure.search.documents import SearchClient
 from azure.core.credentials import AzureKeyCredential 
 from azure.search.documents.models import VectorizableTextQuery 
 from azure.search.documents.models import (
-    QueryType,QueryCaptionType,QueryAnswerType
+    QueryType,QueryAnswerType
 )
+
+#Debug mode
+#set stderr_logs to True if you want to see logs in the console
+
+stderr_logs = True
+if stderr_logs:
+    logging_handlers = [
+        logging.FileHandler("debug.log"),
+        logging.StreamHandler()
+    ]
+else:
+    logging_handlers = [
+        logging.FileHandler("debug.log")
+    ]
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=logging_handlers
+)
+
+logging.info("Starting the main script")
+start_time = time.time()
 
 # #OpenAI vars
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -38,7 +63,7 @@ password = os.environ.get("SQL_PASSWORD")
 sql_driver = os.environ.get("SQL_DRIVER")
 
 #enables the vector search sample request below
-vectorsearchsample = False
+vectorsearchsample = True
 #enables the hybrid search sample request below
 hyrbidsearchsample = False
 #enables the hybrid search with semantic reranking sample request below
@@ -47,8 +72,8 @@ vectorsemanticsearchsample = False
 #specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
 enroll = False
 
-
-if not enroll:
+if enroll:
+    logging.info("Enroll mode: Enrolling Azure AI Search with Azure SQL integrated vectorization")
     #create a new Azure SQL database and loads data from a CSV file into the database. 
     azuresql.create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server, database_name, username, password, sql_driver)
 
@@ -66,6 +91,7 @@ if not enroll:
 #
 if vectorsearchsample:
     search_input = "Einstein"
+    logging.info(f"Vector search enabled. Running vector search sample request with search input {search_input}")
 
     search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
     vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
@@ -84,7 +110,8 @@ if vectorsearchsample:
 #This is a sample request for a hybrid search. Additionally to the vector search, it also searches for the text input in the index.
 if hyrbidsearchsample:
     search_input = "Einstein"
-
+    logging.info(f"Hybrid search enabled. Running hybrid search sample request with search input {search_input}")
+    
     search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
     vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
 
@@ -100,7 +127,8 @@ if hyrbidsearchsample:
 
 #hybrid search with semantic reranking
 #This is a sample request for a hybrid search with semantic reranking.
-if hyrbidsearchsample:
+if vectorsemanticsearchsample:
+    logging.info(f"Hybrid semantic search enabled. Running hybrid search in combination with semantic search with sample request with search input {search_input}")
     search_input = "Einstein"
     search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
     vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
@@ -136,3 +164,5 @@ if hyrbidsearchsample:
                 print(f"Caption: {caption.highlights}")
             else:
                 print(f"Caption: {caption.text}")
+                
+logging.info(f"Finished execution in {time.time() - start_time} seconds")

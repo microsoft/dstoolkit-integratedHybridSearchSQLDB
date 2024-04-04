@@ -1,5 +1,6 @@
 #Description: This file creates a skillset for Azure AI Search including a SplitSkill and an AzureOpenAIEmbeddingSkill.
 #
+import logging
 from azure.core.credentials import AzureKeyCredential
 import openai 
 from azure.search.documents.indexes.models import (  
@@ -21,9 +22,11 @@ from azure.search.documents.indexes import SearchIndexerClient
 
 #function to create a skillset.
 def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, service_endpoint, aisearch_key):
+    
     openai.api_key = openai_api_key
     skillset_name = index_name + "-skillset"
-
+    logging.info(f"Start creating skillset {skillset_name}")
+    
     #Splitskill to chunk text
     split_skill = SplitSkill(
         description="Split skill to chunk documents",
@@ -38,6 +41,7 @@ def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, se
             OutputFieldMappingEntry(name="textItems", target_name="pages")
         ]    
     )
+    logging.info(f"Defined SplitSkill for text chunking. Context: {split_skill.context}")
 
     #Embedding skill to vectorize text
     embedding_skill = AzureOpenAIEmbeddingSkill(
@@ -53,6 +57,7 @@ def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, se
             OutputFieldMappingEntry(name="embedding", target_name="vector")
         ]
     )
+    logging.info(f"Defined EmbeddingSkill for text vectorization. Context: {embedding_skill.context}")
     #index projections of db rows
     #
     index_projections = SearchIndexerIndexProjections(
@@ -73,7 +78,7 @@ def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, se
             )
         ]
     )
-
+    logging.info(f"Defined IndexProjections for Skillset {skillset_name}")
     skillset = SearchIndexerSkillset(
         name=skillset_name,
         description="Skillset for Azure AI Search with Azure OpenAI Embedding",
@@ -86,5 +91,6 @@ def createSkillset(openai_uri, openai_deployment, openai_api_key, index_name, se
     #create Skillset with split and embedding skills
     c = SearchIndexerClient(service_endpoint, AzureKeyCredential(aisearch_key))  
     c.create_or_update_skillset(skillset)  
-    print(f"{skillset.name} created")  
+    
+    logging.info(f"{skillset.name} created")
     
