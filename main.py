@@ -24,6 +24,16 @@ from azure.search.documents.models import (
 #set stderr_logs to True if you want to see logs in the console
 
 stderr_logs = True
+#enables the vector search sample request below
+vectorsearchsample = True
+#enables the hybrid search sample request below
+hyrbidsearchsample = False
+#enables the hybrid search with semantic reranking sample request below
+vectorsemanticsearchsample = False
+#specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
+enroll = True
+
+
 if stderr_logs:
     logging_handlers = [
         logging.FileHandler("debug.log"),
@@ -62,15 +72,6 @@ username = os.environ.get("SQL_USERNAME")
 password = os.environ.get("SQL_PASSWORD")
 sql_driver = os.environ.get("SQL_DRIVER")
 
-#enables the vector search sample request below
-vectorsearchsample = True
-#enables the hybrid search sample request below
-hyrbidsearchsample = False
-#enables the hybrid search with semantic reranking sample request below
-vectorsemanticsearchsample = False
-
-#specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
-enroll = False
 
 if enroll:
     logging.info("Enroll mode: Enrolling Azure AI Search with Azure SQL integrated vectorization")

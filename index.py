@@ -8,7 +8,7 @@ from azure.search.documents.indexes.models import (
     SearchField, SearchFieldDataType, 
     VectorSearch, HnswAlgorithmConfiguration, VectorSearchProfile, AzureOpenAIVectorizer, 
     AzureOpenAIParameters, SearchIndex, HnswParameters, VectorSearchAlgorithmMetric, SemanticConfiguration, SemanticPrioritizedFields, 
-    SemanticField, SemanticSearch)
+    SemanticField, SemanticSearch, ExhaustiveKnnAlgorithmConfiguration, ExhaustiveKnnParameters)
 
 
 #to run this code indipendently, uncomment the following lines and make sure to set your environment variables
@@ -58,6 +58,11 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
             name="vectorsearch-profile",
             algorithm_configuration_name="hnsw-config",
             vectorizer="openai-ada" 
+        ),
+        VectorSearchProfile(
+            name="exhaustiveknn-profile",
+            algorithm_configuration_name="exhaustiveknn-config",
+            vectorizer="openai-ada"
         )
     ], #at least azure-search-documents 11.6.0b1 (preview in March 26, 2024). See https://pypi.org/project/azure-search-documents/#history
     algorithms=[
@@ -69,6 +74,12 @@ def create_index(aisearch_key, service_endpoint, index_name, embedding_length, o
                 ef_search=500,  
                 metric=VectorSearchAlgorithmMetric.COSINE,  
             ),  
+        ),
+        ExhaustiveKnnAlgorithmConfiguration(
+            name="exhaustiveknn-config",
+            parameters=ExhaustiveKnnParameters(
+                metric=VectorSearchAlgorithmMetric.COSINE
+            )
         )
 
     ],
