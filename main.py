@@ -75,6 +75,8 @@ username = os.environ.get("SQL_USERNAME")
 password = os.environ.get("SQL_PASSWORD")
 sql_driver = os.environ.get("SQL_DRIVER")
 
+#search input defines the term that should be searched in the index
+search_input = "Einstein"
 
 if enroll:
     logging.info("Enroll mode: Enrolling Azure AI Search with Azure SQL integrated vectorization")
@@ -96,9 +98,6 @@ if enroll:
 #
 if vectorsearchsample:
     
-    #search input defines the term that should be searched in the index
-    search_input = "Einstein"
-    
     logging.info(f"Vector search enabled. Running vector search sample request with search input {search_input}")
 
     search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
@@ -113,13 +112,11 @@ if vectorsearchsample:
 
     for result in results:
         print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
-    
+        
+
 #hybrid search
 #This is a sample request for a hybrid search. Additionally to the vector search, it also searches for the text input in the index.
 if hyrbidsearchsample:
-    
-    #search input defines the term that should be searched in the index
-    search_input = "Einstein"
     
     logging.info(f"Hybrid search enabled. Running hybrid search sample request with search input {search_input}")
     
@@ -140,9 +137,6 @@ if hyrbidsearchsample:
 #This is a sample request for a hybrid search with semantic reranking.
 if vectorsemanticsearchsample:
     logging.info(f"Hybrid semantic search enabled. Running hybrid search in combination with semantic search with sample request with search input {search_input}")
-    
-    #search input defines the term that should be searched in the index
-    search_input = "Einstein"
     
     search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
     vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
