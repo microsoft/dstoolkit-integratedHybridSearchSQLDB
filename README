@@ -1,1 +1,26 @@
-Azure AI with Azure SQL
+# Hybrid Azure AI Search with Azure SQL DB
+
+## Scenario
+
+## Prerequisites 
+- Python
+- Terraform
+- Azure Subscription with OpenAI and Ada Model enabled
+
+## Repository
+
+### Terraform
+
+### Python
+
+## 1. Create Resources
+
+## 2. Test Resources
+
+## 3. Adapt Repository
+
+### Different Database
+
+### Retrain when new Data arrives
+
+### ...
