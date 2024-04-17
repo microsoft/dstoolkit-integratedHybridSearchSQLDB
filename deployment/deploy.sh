@@ -4,8 +4,8 @@
 export TF_VAR_region="East US"
 export TF_VAR_sqlpassword=$(openssl rand -base64 12)
 export TF_VAR_sqlusername=$(openssl rand -base64 6)
-export TF_VAR_start_ip_address=$(curl -s ifconfig.me/ip)
-export TF_VAR_end_ip_address=$(curl -s ifconfig.me/ip)
+export TF_VAR_start_ip_address=$(curl -s https://api.ipify.org)
+export TF_VAR_end_ip_address=$(curl -s https://api.ipify.org)
 terraform init
 terraform plan -out "main.tfplan"
 terraform apply "main.tfplan"
