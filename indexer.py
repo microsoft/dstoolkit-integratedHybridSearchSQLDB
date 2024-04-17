@@ -23,7 +23,6 @@ def create_indexer(service_endpoint, index_name, aisearch_key):
     )
     logging.info(f"created indexer configuration for {indexer_name}. Skillset: {indexer.skillset_name}, Target Index: {indexer.target_index_name}, Data Source: {indexer.data_source_name}")
     
-    #TODO: need firewall rule for Azure SQL DB 
     indexer_c = SearchIndexerClient(service_endpoint, AzureKeyCredential(aisearch_key))
     indexer_result = indexer_c.create_or_update_indexer(indexer)
 

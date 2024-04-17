@@ -13,6 +13,7 @@ terraform apply "main.tfplan"
 
 # Export all needed variables
 PREFIX=$(terraform state show random_string.random | grep "id" | awk -F' = ' '{print $2}' | tr -d '"')
+echo prefix=${PREFIX}
 echo sqladmin=${TF_VAR_sqlusername}
 echo sqlpassword=${TF_VAR_sqlpassword}
 export AZURE_SEARCH_KEY=$(az search admin-key show --resource-group ${PREFIX}-aisearch-sql-rg --service-name ${PREFIX}-aisearch --query primaryKey -o tsv | rev | cut -c 2- | rev)
