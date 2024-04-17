@@ -203,16 +203,21 @@
 1. To create all the resources mentioned in the Terraform section and the settings in the Python section of this repo we created a Bash script for you.
 Clone this repo either to a Linux machine, WSL2 or to the Azure Cloud shell.
 ```git clone repolink```
-1. Potentially change region in `/deployment/deploy.sh` line 4
-1. Execute the Bash script that executes the terraform template, stores the environment variables and executes the python code. Navigate to the repo you cloned.
+1. Potentially change the region where the resources will be created in `/deployment/deploy.sh` line 4. Be aware that the services are not available in all regions.
+1. Execute the Bash script that applies the terraform template, stores the environment variables and executes the python code. To do so navigate to the repo you cloned and type
 ```bash /deployment/deploy.sh```
-1. 
-
 
 ## 2. Test Resources
-
+The first run of this repo will search for "Einstein" in the data. If you want to test more options you can tun the ```logic.sh``` script. You can change the search options in ```main.py``` by setting them True. The options are:
+- **Hybrid Search**
+- **Semantic Search**
+- **Vector Search**
+- **App** - this runs a console app so you can continuously create querries and receive responses
 
 ## 3. Adapt Repository
+
+### Different Search functionalities
+If you have already deployed all the resources and only wish to run a different scenario - eg. use hybrid search instead of only vector search - you have to enter your current PREFIX in the deploy.sh. Additionally you need to navigate to main.py and change the value of enroll to == False and the other variabled accordingly.
 
 ### Different Database
 
@@ -222,4 +227,4 @@ Clone this repo either to a Linux machine, WSL2 or to the Azure Cloud shell.
 
 ## Potential Errors
 
-```sed -i 's/\r//g' script.sh```
+- For some reason Windows added \r to some variables in the bash script. If you get an error like this, tun the following to fix the error: ```sed -i 's/\r//g' deploy.sh```

@@ -13,6 +13,7 @@ import openai
 import index
 import skillset
 import indexer
+import consoleapp
 from azure.search.documents import SearchClient  
 from azure.core.credentials import AzureKeyCredential 
 from azure.search.documents.models import VectorizableTextQuery 
@@ -25,16 +26,19 @@ from azure.search.documents.models import (
 stderr_logs = True
 
 #enables the vector search sample request below
-vectorsearchsample = True
+vectorsearchsample = False
 
 #enables the hybrid search sample request below
-hyrbidsearchsample = False
+hyrbidsearchsample = True
 
 #enables the hybrid search with semantic reranking sample request below
 vectorsemanticsearchsample = False
 
+#allows you to continuously enter search commands in the console
+app = False
+
 #specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
-enroll = True
+enroll = False
 
 
 if stderr_logs:
@@ -93,84 +97,93 @@ if enroll:
     #create indexer with index, data source and skillset
     indexer.create_indexer(service_endpoint, index_name, aisearch_key)
 
-#vector search
-#This is a sample request for a vector search. It takes a text input and returns the most similar vector from the index.
-#
-if vectorsearchsample:
-    
-    logging.info(f"Vector search enabled. Running vector search sample request with search input {search_input}")
-
-    search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
-    vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
-
-    results = search_client.search(
-        search_text=None,
-        vector_queries=[vector_query],
-        select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
-        top=2
-    )
-
-    for result in results:
-        print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
+if app == False:
+    #vector search
+    #This is a sample request for a vector search. It takes a text input and returns the most similar vector from the index.
+    #
+    if vectorsearchsample:
         
+        logging.info(f"Vector search enabled. Running vector search sample request with search input {search_input}")
 
-#hybrid search
-#This is a sample request for a hybrid search. Additionally to the vector search, it also searches for the text input in the index.
-if hyrbidsearchsample:
-    
-    logging.info(f"Hybrid search enabled. Running hybrid search sample request with search input {search_input}")
-    
-    search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
-    vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
+        search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
+        vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
 
-    results = search_client.search(
-        search_text=search_input,
-        vector_queries=[vector_query],
-        select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
-        top=2
-    )
+        results = search_client.search(
+            search_text=None,
+            vector_queries=[vector_query],
+            select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
+            top=2
+        )
 
-    for result in results:
-        print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
-
-#hybrid search with semantic reranking
-#This is a sample request for a hybrid search with semantic reranking.
-if vectorsemanticsearchsample:
-    logging.info(f"Hybrid semantic search enabled. Running hybrid search in combination with semantic search with sample request with search input {search_input}")
-    
-    search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
-    vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
-
-    results = search_client.search(
-        search_text=search_input,
-        vector_queries=[vector_query],
-        select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
-        query_type=QueryType.SEMANTIC,
-        semantic_configuration_name=f"{index_name}-semantic",
-        query_caption=QueryAnswerType.EXTRACTIVE,
-        query_answer=QueryAnswerType.EXTRACTIVE,
-        top=2
-    )
-
-    semantic_results = results.get_answers()
-    if semantic_results:
-        for result in semantic_results:
-            if result.highlights:
-                print(f"Semantic search result (highlight): {result.highlights}")
-            else:
-                print(f"Semantic search result: {result.text}")
-            
-            print(f"Semantic results score:  {result.score}")
+        for result in results:
+            print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
             
 
-    for result in results:
-        print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
-        captions = result["@search.captions"]
-        if captions:
-            caption = captions[0]
-            if caption.highlights:
-                print(f"Caption: {caption.highlights}")
-            else:
-                print(f"Caption: {caption.text}")
+    #hybrid search
+    #This is a sample request for a hybrid search. Additionally to the vector search, it also searches for the text input in the index.
+    if hyrbidsearchsample:
+        
+        logging.info(f"Hybrid search enabled. Running hybrid search sample request with search input {search_input}")
+        
+        search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
+        vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
+
+        results = search_client.search(
+            search_text=search_input,
+            vector_queries=[vector_query],
+            select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
+            top=2
+        )
+
+        for result in results:
+            print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
+
+    #hybrid search with semantic reranking
+    #This is a sample request for a hybrid search with semantic reranking.
+    if vectorsemanticsearchsample:
+        logging.info(f"Hybrid semantic search enabled. Running hybrid search in combination with semantic search with sample request with search input {search_input}")
+        
+        search_client = SearchClient(service_endpoint, index_name, credential=AzureKeyCredential(aisearch_key))
+        vector_query = VectorizableTextQuery(text=search_input, k_nearest_neighbors=2, fields="vector", exhaustive=True)
+
+        results = search_client.search(
+            search_text=search_input,
+            vector_queries=[vector_query],
+            select=["Id", "chunk", "db_table_id", "db_table_year", "db_table_discipline", "db_table_winner", "db_table_description"],
+            query_type=QueryType.SEMANTIC,
+            semantic_configuration_name=f"{index_name}-semantic",
+            query_caption=QueryAnswerType.EXTRACTIVE,
+            query_answer=QueryAnswerType.EXTRACTIVE,
+            top=2
+        )
+
+        semantic_results = results.get_answers()
+        if semantic_results:
+            for result in semantic_results:
+                if result.highlights:
+                    print(f"Semantic search result (highlight): {result.highlights}")
+                else:
+                    print(f"Semantic search result: {result.text}")
+                
+                print(f"Semantic results score:  {result.score}")
+                
+
+        for result in results:
+            print(f"Nobel price result: {result['db_table_year']} {result['db_table_winner']} description: {result['db_table_description']}")
+            captions = result["@search.captions"]
+            if captions:
+                caption = captions[0]
+                if caption.highlights:
+                    print(f"Caption: {caption.highlights}")
+                else:
+                    print(f"Caption: {caption.text}")
+
+if app:
+    if vectorsearchsample:
+        consoleapp.vectorsearch(service_endpoint, index_name, aisearch_key)
+    if hyrbidsearchsample:
+        consoleapp.hybridsearch(service_endpoint, index_name, aisearch_key)
+    if vectorsemanticsearchsample:
+        consoleapp.vectorsemanticsearch(service_endpoint, index_name, aisearch_key)
                 
 logging.info(f"Finished execution in {time.time() - start_time} seconds")
