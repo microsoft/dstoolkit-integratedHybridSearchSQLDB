@@ -1,3 +1,4 @@
+
 # Configure the Azure provider
 terraform {
   required_providers {
@@ -15,26 +16,32 @@ provider "azurerm" {
 }
 #random string generation
 resource "random_string" "random" {
-  length           = 8
-  special          = false
-  lower            = true
-  upper            = false
-  override_special = "/@£$"
+  length  = 8
+  special = false
+  lower   = true
+  upper   = false
 }
+
+#get the environment variables
+variable "region" {}
+variable "sqlpassword" {}
+variable "sqlusername" {}
+variable "start_ip_address" {}
+variable "end_ip_address" {}
 
 #resource group. 
 #Location is important since everyone else will inherit from here
 resource "azurerm_resource_group" "rg" {
-  name     = "aisearch-sql-integrated"
-  location = "Switzerland North"
+  name     = "${random_string.random.result}-aisearch-sql-rg"
+  location = var.region
 }
 #Action needed: add sql credentials
 resource "azurerm_mssql_server" "server" {
   name                         = "${random_string.random.result}-sqlserver-hybrid"
   resource_group_name          = azurerm_resource_group.rg.name
   location                     = azurerm_resource_group.rg.location
-  administrator_login          = ""
-  administrator_login_password = ""
+  administrator_login          = var.sqlusername
+  administrator_login_password = var.sqlpassword
   version                      = "12.0"
 }
 #Azure SQL Database deployment
@@ -46,8 +53,8 @@ resource "azurerm_mssql_database" "db" {
 resource "azurerm_mssql_firewall_rule" "firewallrule" {
   name             = "AllowIpRangeFromTF"
   server_id        = azurerm_mssql_server.server.id
-  start_ip_address = ""
-  end_ip_address   = "" #replace the IP addresses with your own (range)
+  start_ip_address = var.start_ip_address
+  end_ip_address   = var.end_ip_address
 
 }
 #allow all azure services to access the sql server
