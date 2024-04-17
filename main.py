@@ -81,10 +81,10 @@ search_input = "Einstein"
 if enroll:
     logging.info("Enroll mode: Enrolling Azure AI Search with Azure SQL integrated vectorization")
     
-    #create a new Azure SQL database and loads data from a CSV file into the database. 
+    #create a new Azure SQL table and loads data from a CSV file into the table. 
     azuresql.create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server, database_name, username, password, sql_driver)
 
-    #create indexer with vector search configuration
+    #create index with vector search configuration
     index.create_index(aisearch_key, service_endpoint, index_name, embedding_length, openai.api_key, openai.api_type, openai_uri, openai_deployment)
 
     #create a skillset for Azure AI Search with Azure OpenAi Embedding and TextSplit

@@ -26,7 +26,7 @@ from azure.search.documents.indexes.models import (
 def create_db_and_aisearch_connection(aisearch_key, service_endpoint, sql_server, database_name, username, password, sql_driver):
     logging.info("Creating a Azure SQL DB Table and importing data from CSV file")
     #Azure SQL Connection string
-    connection_string = f"DRIVER={sql_driver};SERVER={sql_server};DATABASE={database_name};UID={username};PWD={password}"
+    connection_string = f"DRIVER={sql_driver};SERVER=tcp:{sql_server};DATABASE={database_name};UID={username};PWD={password}"
     logging.info(f"Connection String for Azuer SQL DB: {connection_string}")
     #TODO: add error handling
     co = pyodbc.connect(connection_string)
