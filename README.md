@@ -7,9 +7,10 @@ We use Python and Python SDKs to implement this scenario while the resources are
 ![High Level Architecture of the Scenario showing Azure AI Search in the middle connected to Azure SQL DB, Azure OpenAI and the Python app.](/data/Architecture.png)
 
 ## Prerequisites 
-- Python
+- Since we are working with bash please work on a Linux machine, WSL2 or the Azure Cloud shell
+- Install Python
     3.11
-- System packages:
+- Install the following System packages:
     - Pip (`apt install python3-pip`)
     - SQL Driver (`sudo apt-get install -y msodbcsql18`)
     - SQL Connection (`sudo apt install unixodbc-dev`)
@@ -268,7 +269,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
     </summary>
 
     </details>
-- 
+![More detailed Architecture of the Scenario showing Azure AI Search in the middle connected to Azure SQL DB, Azure OpenAI and the Python app.](/data/Architecture_Detail.png)
 
 ## 1. Create Resources
 1. To create all the resources mentioned in the Terraform section and the settings in the Python section of this repo we created a Bash script for you.
@@ -277,9 +278,10 @@ Clone this repo either to a Linux machine, WSL2 or to the Azure Cloud shell.
 1. Potentially change the region where the resources will be created in `/deployment/deploy.sh` line 4. Be aware that the services are not available in all regions.
 1. Execute the Bash script that applies the terraform template, stores the environment variables and executes the python code. To do so navigate to the repo you cloned and type
 ```bash /deployment/deploy.sh```
+1. Go to `portal.azure.com`, find your resource group and look at the different resources created. Specifically Azure AI Search, the Index, Indexer, Datasource and Skillset are important. Look at the JSON definitions created here.
 
 ## 2. Test Resources
-The first run of this repo will search for "Einstein" in the data. If you want to test more options you can tun the ```logic.sh``` script. You can change the search options in ```main.py``` by setting them True. The options are:
+The first run of this repo will search for "Einstein" in the data and return the result in the console. If you want to test more options you can run the ```logic.sh``` script. You can change the search options in ```main.py``` by setting them True. The options are:
 - **Hybrid Search**
 - **Semantic Search**
 - **Vector Search**
