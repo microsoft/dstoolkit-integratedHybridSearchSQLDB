@@ -78,13 +78,13 @@ We use Python and Python SDKs to implement this scenario while the resources are
     <summary>
         Understand the Index
     </summary>
-
+    The index itself is the searchable content in the search engine. The schema as you see below determines which fields are being created within the index and what properties these fields have. 
     ```json
         {  
         "name": "aiindex", #Name of the index
         "fields": [ #Fields to be created in the index that will be filled by the data from the DB
             {  
-                "name": "db_table_description", #Name of the field
+                "name": "db_table_description", #Name of the field, in our scenario only the description is being vectorized and is searchable
                 "type": "SearchFieldDataType.String", #Type of the field being indexed
                 "searchable": true (default where applicable) | false (only Edm.String and Collection(Edm.String) fields can be searchable),  
                 "filterable": true (default) | false,  
@@ -94,7 +94,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
             {
                 "name": "vector", #Needed to write the vector received from OpenAI into
                 "type": "Collection(Edm.Single)",
-                "dimensions": 1536, #
+                "dimensions": 1536, #Each dimension of the vector captures different aspects of a word's meaning or usage. 1536 is the standard for the model we are using.
                 "vectorSearchProfile": "hnsw-profile",
                 "searchable": true,
                 "retrievable": true
@@ -102,22 +102,22 @@ We use Python and Python SDKs to implement this scenario while the resources are
             { ... 
             }
         ],
-        "vectorizers": [ #This is where the user request will be sent
+        "vectorizers": [ #This is the definition of the vectorizer that will be used to transform the data into a vector
             {
                 "name": "openai-ada", #Name of the vectorizer
-                "kind": "azureOpenAI", #Value of predefinded kinds that sets the expectations against the following parameters
-                "azureOpenAIParameters": { #Predefined key following kind
-                    "resourceUri": "https://region.openai.azure.com/", #address of the OpenAI Service that will be used for vestorization
+                "kind": "azureOpenAI", #Value of predefinded kinds - in this case we will be working with an Azure OpenAI model
+                "azureOpenAIParameters": {
+                    "resourceUri": "https://region.openai.azure.com/", #address of the OpenAI Service that will be used for vectorization of the users request
                     "deploymentId": "adadeployment", #Name you gave the text embedding model deployment
                     "apiKey": "xxx", #Key of your Azure OpenAI Service
                 }
             }
         ],
-        "vectorSearch": {
+        "vectorSearch": { #Configure the algorithms that can be applied during search, in this case to find similar vectors for the best search result
             "algorithms": [
                 {
                     "name": "hnsw-config",
-                    "kind": "hnsw",
+                    "kind": "hnsw", #performs an approximate nearest neighbor (ANN) search
                     "hnswParameters": {
                         "metric": "cosine",
                         "m": 4,
@@ -128,7 +128,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 },
                 {
                     "name": "exhaustiveknn-config",
-                    "kind": "exhaustiveKnn",
+                    "kind": "exhaustiveKnn", #performs a brute-force search that scans the entire vector space
                     "hnswParameters": null,
                     "exhaustiveKnnParameters": {
                         "metric": "cosine"
@@ -136,7 +136,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 }
             ],
         },
-        "profiles": [
+        "profiles": [ #Connect the algorithm configuration with the vectorizer definition
             {
                 "name": "hnsw-profile", #Name of the profile
                 "algorithm": "hnsw-config", #There are two algorithms in Azure AI Search for vector search: KNN and HNSW, see below for more details,
@@ -148,12 +148,12 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 "vectorizer": "openai-ada"
             }
         ],
-        "similarity": (optional) {
-            "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
+        "similarity": { #This is the definition for full text search queries
+            "@odata.type": "#Microsoft.Azure.Search.BM25Similarity", #B25 is a relevance scoring algorithm ranking the different response options
             "k1": null,
             "b": null
         },
-        "semantic": {
+        "semantic": { #Configures semantic reranking in full text and hybrid search
             "defaultConfiguration": null,
             "configurations": [
                 {
@@ -173,52 +173,33 @@ We use Python and Python SDKs to implement this scenario while the resources are
         }        
     ```
     </details>
-
-    <details>
-    <summary>
-        Understand the vector search
-    </summary>
-
-    </details>
-    <details>
-    <summary>
-        Understand the bm25
-    </summary>
-
-    </details>
-    <details>
-    <summary>
-        Understand the semantic ranker
-    </summary>
-
-    </details>
 - Create a Skillset within the Azure AI Search service that links to the Ada embedding model deployment in the Azure OpenAI service
     <details>
     <summary>
         Understand the Skillsets
     </summary>
-
+    A Skillset defines operations that generate textual content and structure from documents.
     ```json
         {
             "skills": [
                 {
-                    "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
+                    "@odata.type": "#Microsoft.Skills.Text.SplitSkill", #breaks text into chunks of text
                     "name": "#1", #Name of the Skill
                     "description": null,
                     "context": "/document/reviews_text", #Scope of the operation, which could be once per document or once for each item in a collection
                     "defaultLanguageCode": "en",
-                    "textSplitMode": "pages",
-                    "maximumPageLength": 5000,
-                    "inputs": [ #Originate from nodes in an enriched document
+                    "textSplitMode": "pages", #Split either by pages or sentences. Pages have a configurable maximum length.
+                    "maximumPageLength": 5000, #Our maximum length of a page is 5000 characters
+                    "inputs": [ #the text to split into subsctrings
                         {
                             "name": "text",
-                            "source": "/document/reviews_text" #Identify a given node
+                            "source": "/document/reviews_text" #source position
                         }
                     ],
-                    "outputs": [ #send back to the enriched document as a new node
+                    "outputs": [ #an array of the extracted substrings
                         {
                             "name": "textItems",
-                            "targetName": "pages"
+                            "targetName": "pages" #target position which will be used by the next skill in this scenario
                         }
                     ]
                 },
@@ -255,19 +236,50 @@ We use Python and Python SDKs to implement this scenario while the resources are
     ```
 
     </details>
+- Create an Indexer within the Azure AI Search service that links to the Skillset and the Data source
+    <details>
+    <summary>
+        Understand the Indexer
+    </summary>
+    The Indexer brings the previously explained Index, Data source and Skillset together. Running this Indexer, whether automatically on a data refresh schedule or on demand, will create the Index. In this case the Index is the destination and the Data source is the origin which will be enriched by the Skillset.
+    ```json
+    {
+        "name": "aiindex-indexer",
+        "description": "something",
+        "dataSourceName": "nobelprizewinners-azuresqlcon", #reference the Data source where the origin data is defined
+        "skillsetName": "aiindex-skillset", #reference the Skillset where extra processing of content en route to an index is configured
+        "targetIndexName": "aiindex", #reference the Index into which the results should be written
+        "disabled": false,
+        "schedule": null,
+    }
+    ```
+
+    </details>
+    <details>
+    <summary>
+        Understand the vector search
+    </summary>
+
+    </details>
+    <details>
+    <summary>
+        Understand the bm25
+    </summary>
+
+    </details>
+    <details>
+    <summary>
+        Understand the semantic ranker
+    </summary>
+
+    </details>
     <details>
     <summary>
         Understand the Ada embedding model
     </summary>
 
     </details>
-- Create an Indexer within the Azure AI Search service that links to the Skillset and the Data source
-    <details>
-    <summary>
-        Understand the Indexer
-    </summary>
 
-    </details>
 ![More detailed Architecture of the Scenario showing Azure AI Search in the middle connected to Azure SQL DB, Azure OpenAI and the Python app.](/data/Architecture_Detail.png)
 
 ## 1. Create Resources
