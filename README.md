@@ -1,7 +1,7 @@
 # Hybrid Azure AI Search with Azure SQL DB
 
 ## Scenario
-This repo shows how to make an Azure SQL DB searchable through Azure AI Search. In general it allows you to vectorize the data within the Azure SQL DB using an OpenAI embedding model and make ist searchable through requests that are also being vectorized. The hybrid part allows you to use classic search methods in combination with vector search an get the best result between both worlds.
+This repo shows how to make an Azure SQL DB searchable through Azure AI Search. In general it allows you to vectorize the data within the Azure SQL DB using an OpenAI embedding model and make is searchable through requests that are also being vectorized. The hybrid part allows you to use classic search methods in combination with vector search and get the best result between both worlds by activating the semantic ranker feature on the Azure AI Search service.
 We use Python and Python SDKs to implement this scenario while the resources are created using terraform.
 
 ![High Level Architecture of the Scenario showing Azure AI Search in the middle connected to Azure SQL DB, Azure OpenAI and the Python app.](/data/Architecture.png)
@@ -52,7 +52,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
         The Data sources that can be defined in the Azure AI Search service provide connection information for on demand or scheduled data refresh of a target index, pulling data from supported Azure data sources.
      
      ```json
-        {
+    {
         "name": "nobelprizewinners-azuresqlcon", #Name of the data source
         "description": null, #Anything you want, or nothing at all
         "type": "azuresql", #Must be a supported data source
@@ -68,7 +68,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
         "dataDeletionDetectionPolicy": null,
         "encryptionKey": null,
         "identity": null
-        }
+    }
     ```
 
 
@@ -78,9 +78,10 @@ We use Python and Python SDKs to implement this scenario while the resources are
     <summary>
         Understand the Index
     </summary>
-    The index itself is the searchable content in the search engine. The schema as you see below determines which fields are being created within the index and what properties these fields have. 
-    ```json
-        {  
+        The index itself is the searchable content in the search engine. The schema as you see below determines which fields are being created within the index and what properties these fields have.
+
+     ```json
+    {  
         "name": "aiindex", #Name of the index
         "fields": [ #Fields to be created in the index that will be filled by the data from the DB
             {  
@@ -98,8 +99,6 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 "vectorSearchProfile": "hnsw-profile",
                 "searchable": true,
                 "retrievable": true
-            },
-            { ... 
             }
         ],
         "vectorizers": [ #This is the definition of the vectorizer that will be used to transform the data into a vector
@@ -170,69 +169,86 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 }
             ]
         }
-        }        
-    ```
+    }        
+     ```
     </details>
 - Create a Skillset within the Azure AI Search service that links to the Ada embedding model deployment in the Azure OpenAI service
     <details>
     <summary>
         Understand the Skillsets
     </summary>
-    A Skillset defines operations that generate textual content and structure from documents.
+    A Skillset defines operations that generate textual content and structure from documents and than matches them to the fields in the Index
+
     ```json
-        {
-            "skills": [
+    {
+        "skills": [
+            {
+                "@odata.type": "#Microsoft.Skills.Text.SplitSkill", #breaks text into chunks of text
+                "name": "#1", #Name of the Skill
+                "context": "/document", #Scope of the operation, which could be once per document or once for each item in a collection
+                "defaultLanguageCode": "en",
+                "textSplitMode": "pages", #Split either by pages or sentences. Pages have a configurable maximum length.
+                "maximumPageLength": 300, #Our maximum length of a page is 300 characters
+                "pageOverlapLength": 20,
+                "maximumPagesToTake": 0,
+                "inputs": [ #the text to split into subsctrings
+                    {
+                        "name": "text",
+                        "source": "/document/Description" #source position
+                    }
+                ],
+                "outputs": [ #an array of the extracted substrings
+                    {
+                        "name": "textItems",
+                        "targetName": "pages" #target position which will be used by the next skill in this scenario
+                    }
+                ]
+            },
+            {
+                "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill", #Connects to your Azure OpenAI embedding model to generate vectors
+                "name": "#2",
+                "context": "/document/pages/*", #Scope of the operation, which could be once per document or once for each item in a collection
+                "resourceUri": "https://region.openai.azure.com", #Endpoint of the OpenAI Service
+                "apiKey": "xxx",
+                "deploymentId": "adadeployment",
+                "inputs": [
+                    {
+                        "name": "text",
+                        "source": "/document/pages/*", #source position - notice this is where the chunks were previously written to
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "ebedding", #vectorized embedding for the input text
+                        "targetName": "vector" #name of the field in the Index
+                    }
+                ]
+            }
+        ],
+        "indexProjections": { #this allows you to match the enriched information to potentially multiple indexes
+            "selectors": [
                 {
-                    "@odata.type": "#Microsoft.Skills.Text.SplitSkill", #breaks text into chunks of text
-                    "name": "#1", #Name of the Skill
-                    "description": null,
-                    "context": "/document/reviews_text", #Scope of the operation, which could be once per document or once for each item in a collection
-                    "defaultLanguageCode": "en",
-                    "textSplitMode": "pages", #Split either by pages or sentences. Pages have a configurable maximum length.
-                    "maximumPageLength": 5000, #Our maximum length of a page is 5000 characters
-                    "inputs": [ #the text to split into subsctrings
+                    "targetIndexName": "aiindex", #in our case we are only interested in one target index
+                    "parentKeyFieldName": "db_table_id", #the name of the field in the target index that contains the value of the key for the parent document
+                    "sourceContext": "/document/pages/*",
+                    "mappings": [ #map the enriched data to the fields in the search Index
                         {
-                            "name": "text",
-                            "source": "/document/reviews_text" #source position
-                        }
-                    ],
-                    "outputs": [ #an array of the extracted substrings
-                        {
-                            "name": "textItems",
-                            "targetName": "pages" #target position which will be used by the next skill in this scenario
-                        }
-                    ]
-                },
-                {
-                    "@odata.type": "#Microsoft.Skills.Text.SentimentSkill",
-                    "name": "#2",
-                    "description": null,
-                    "context": "/document/reviews_text/pages/*",
-                    "defaultLanguageCode": "en",
-                    "inputs": [
-                        {
-                            "name": "text",
-                            "source": "/document/reviews_text/pages/*",
-                        }
-                    ],
-                    "outputs": [
-                        {
-                            "name": "sentiment",
-                            "targetName": "sentiment"
+                            "name": "chunk",
+                            "source": "/document/pages/*",
                         },
                         {
-                            "name": "confidenceScores",
-                            "targetName": "confidenceScores"
+                            "name": "vector",
+                            "source": "/document/pages/*/vector",
                         },
                         {
-                            "name": "sentences",
-                            "targetName": "sentences"
+                            "name": "db_table_description",
+                            "source": "/document/Description",
                         }
                     ]
                 }
-            . . .
-        ]
+            ]
         }
+    }
     ```
 
     </details>
@@ -242,6 +258,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
         Understand the Indexer
     </summary>
     The Indexer brings the previously explained Index, Data source and Skillset together. Running this Indexer, whether automatically on a data refresh schedule or on demand, will create the Index. In this case the Index is the destination and the Data source is the origin which will be enriched by the Skillset.
+
     ```json
     {
         "name": "aiindex-indexer",

@@ -38,7 +38,7 @@ vectorsemanticsearchsample = False
 app = False
 
 #specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
-enroll = False
+enroll = True
 
 
 if stderr_logs:
