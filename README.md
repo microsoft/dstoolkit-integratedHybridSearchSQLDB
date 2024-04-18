@@ -73,8 +73,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
 
 
     </details>
-- Create an Index within the Azure AI Search service that mapps the data from the datasource to the index, defines what data can be searched and what kind of index should be created - in this case vector search and bm25 search with a semantic ranker??
-++ VECTORIZER
+- Create an Index within the Azure AI Search service that mapps the data from the datasource to the index, defines what data can be searched and what kind of index should be created - in this case vector search and bm25 search with a semantic ranker. The vectorizer will than vectorize the users search text to be able to apply it to the vectorized index.
     <details>
     <summary>
         Understand the Index
