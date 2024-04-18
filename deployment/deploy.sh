@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create all needed resources in azure
-export TF_VAR_region="East US"
+export TF_VAR_region="West US"
 export TF_VAR_sqlpassword=$(openssl rand -base64 12)
 export TF_VAR_sqlusername=$(openssl rand -base64 6)
 export TF_VAR_start_ip_address=$(curl -s https://api.ipify.org)
