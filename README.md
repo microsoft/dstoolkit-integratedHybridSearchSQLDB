@@ -1,8 +1,10 @@
 # Hybrid Azure AI Search with Azure SQL DB
 
 ## Scenario
+This repo shows how to make an Azure SQL DB searchable through Azure AI Search. In general it allows you to vectorize the data within the Azure SQL DB using an OpenAI embedding model and make ist searchable through requests that are also being vectorized. The hybrid part allows you to use classic search methods in combination with vector search an get the best result between both worlds.
+We use Python and Python SDKs to implement this scenario while the resources are created using terraform.
 
-
+![High Level Architecture of the Scenario showing Azure AI Search in the middle connected to Azure SQL DB, Azure OpenAI and the Python app.](/data/Architecture.png)
 
 ## Prerequisites 
 - Python
@@ -28,24 +30,25 @@
 - Azure AI Search with Semantic Ranker enabled
 
 ### Python
-- Create new table in the Azure SQL DB and upload the CSV Data
+- Create a new table in the Azure SQL DB and upload the CSV Data
     <details>
-        <summary>
-            Understand the data
-        </summary>
+    <summary>
+        Understand the data
+    </summary>
+    We are using the list of all nobelprize winners since 1901 containing the year they received the price, the discipline they work in, their name and a description of why they won the price.
 
-            | First Header  | Second Header |
-            | ------------- | ------------- |
-            | Content Cell  | Content Cell  |
-            | Content Cell  | Content Cell  |
+    | year  | discipline | winner | description |
+    | ----- | ---------- | ------ | ----------- | 
+    | 1901  | chemistry  | Jacobus van Hoff | in recognition of the extraordinary services he has rendered by the discovery of the laws of chemical dynamics and osmotic pressure in solutions |
+    | 1901  | literature | Sully Prudhomme | in special recognition of his poetic composition, which gives evidence of lofty idealism, artistic perfection and a rare combination of the qualities of both heart and intellect |
 
     </details>
 - Create a Data source within the Azure AI Search service that links to the table previously created in the Azure SQL DB
     <details>
-        <summary>
-            Understand Data sources
-        </summary>
-            The Data sources that can be defined in the Azure AI Search service provide connection information for on demand or scheduled data refresh of a target index, pulling data from supported Azure data sources.
+    <summary>
+        Understand Data sources
+    </summary>
+        The Data sources that can be defined in the Azure AI Search service provide connection information for on demand or scheduled data refresh of a target index, pulling data from supported Azure data sources.
      
      ```json
         {
@@ -69,63 +72,131 @@
 
 
     </details>
-- Create an Index within the Azure AI Search service that mapps the data from the datasource to the index, defines what data can be searched and defines what kind of index should be created - in this case vector search and bm25 search with a semantic ranker??
+- Create an Index within the Azure AI Search service that mapps the data from the datasource to the index, defines what data can be searched and what kind of index should be created - in this case vector search and bm25 search with a semantic ranker??
 ++ VECTORIZER
     <details>
-        <summary>
-            Understand the Index
-        </summary>
+    <summary>
+        Understand the Index
+    </summary>
 
     ```json
         {  
         "name": "aiindex", #Name of the index
         "fields": [ #Fields to be created in the index that will be filled by the data from the DB
             {  
-            "name": "db_table_description", #Name of the field
-            "type": "SearchFieldDataType.String", #Type of the field being indexed
-            "searchable": true (default where applicable) | false (only Edm.String and Collection(Edm.String) fields can be searchable),  
-            "filterable": true (default) | false,  
-            "sortable": true (default where applicable) | false (Collection(Edm.String) fields cannot be sortable),  
-            "facetable": true (default where applicable) | false (Edm.GeographyPoint fields cannot be facetable),
+                "name": "db_table_description", #Name of the field
+                "type": "SearchFieldDataType.String", #Type of the field being indexed
+                "searchable": true (default where applicable) | false (only Edm.String and Collection(Edm.String) fields can be searchable),  
+                "filterable": true (default) | false,  
+                "sortable": true (default where applicable) | false (Collection(Edm.String) fields cannot be sortable),  
+                "facetable": true (default where applicable) | false (Edm.GeographyPoint fields cannot be facetable),
+            },
+            {
+                "name": "vector", #Needed to write the vector received from OpenAI into
+                "type": "Collection(Edm.Single)",
+                "dimensions": 1536, #
+                "vectorSearchProfile": "hnsw-profile",
+                "searchable": true,
+                "retrievable": true
+            },
+            { ... 
             }
         ],
-        "similarity": (optional) { },
-        "suggesters": (optional) [ ... ],  
-        "scoringProfiles": (optional) [ ... ],  
-        "analyzers":(optional) [ ... ],
-        "charFilters":(optional) [ ... ],
-        "tokenizers":(optional) [ ... ],
-        "tokenFilters":(optional) [ ... ],
-        "defaultScoringProfile": (optional) "Name of a custom scoring profile to use as the default",  
-        "corsOptions": (optional) { },
-        "encryptionKey":(optional) { }  
+        "vectorizers": [ #This is where the user request will be sent
+            {
+                "name": "openai-ada", #Name of the vectorizer
+                "kind": "azureOpenAI", #Value of predefinded kinds that sets the expectations against the following parameters
+                "azureOpenAIParameters": { #Predefined key following kind
+                    "resourceUri": "https://region.openai.azure.com/", #address of the OpenAI Service that will be used for vestorization
+                    "deploymentId": "adadeployment", #Name you gave the text embedding model deployment
+                    "apiKey": "xxx", #Key of your Azure OpenAI Service
+                }
+            }
+        ],
+        "vectorSearch": {
+            "algorithms": [
+                {
+                    "name": "hnsw-config",
+                    "kind": "hnsw",
+                    "hnswParameters": {
+                        "metric": "cosine",
+                        "m": 4,
+                        "efConstruction": 400,
+                        "efSearch": 500
+                    },
+                    "exhaustiveKnnParameters": null
+                },
+                {
+                    "name": "exhaustiveknn-config",
+                    "kind": "exhaustiveKnn",
+                    "hnswParameters": null,
+                    "exhaustiveKnnParameters": {
+                        "metric": "cosine"
+                    }
+                }
+            ],
+        },
+        "profiles": [
+            {
+                "name": "hnsw-profile", #Name of the profile
+                "algorithm": "hnsw-config", #There are two algorithms in Azure AI Search for vector search: KNN and HNSW, see below for more details,
+                "vectorizer": "openai-ada" #Name of the vectorizer you chose
+            },
+            {
+                "name": "knn-profile",
+                "algorithm": "exhaustiveknn-config",
+                "vectorizer": "openai-ada"
+            }
+        ],
+        "similarity": (optional) {
+            "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
+            "k1": null,
+            "b": null
+        },
+        "semantic": {
+            "defaultConfiguration": null,
+            "configurations": [
+                {
+                    "name": "aiindex-semantic",
+                    "prioritizedFields": {
+                        "titleField": null,
+                        "prioritizedContentFields": [
+                            {
+                                "fieldName": "chunk"
+                            }
+                        ],
+                        "prioritizedKeywordsFields": []
+                    }
+                }
+            ]
+        }
         }        
     ```
+    </details>
+
+    <details>
+    <summary>
+        Understand the vector search
+    </summary>
 
     </details>
     <details>
-        <summary>
-            Understand the vector search
-        </summary>
+    <summary>
+        Understand the bm25
+    </summary>
 
     </details>
     <details>
-        <summary>
-            Understand the bm25
-        </summary>
-
-    </details>
-    <details>
-        <summary>
-            Understand the semantic ranker
-        </summary>
+    <summary>
+        Understand the semantic ranker
+    </summary>
 
     </details>
 - Create a Skillset within the Azure AI Search service that links to the Ada embedding model deployment in the Azure OpenAI service
     <details>
-        <summary>
-            Understand the Skillsets
-        </summary>
+    <summary>
+        Understand the Skillsets
+    </summary>
 
     ```json
         {
@@ -185,16 +256,16 @@
 
     </details>
     <details>
-        <summary>
-            Understand the Ada embedding model
-        </summary>
+    <summary>
+        Understand the Ada embedding model
+    </summary>
 
     </details>
 - Create an Indexer within the Azure AI Search service that links to the Skillset and the Data source
     <details>
-        <summary>
-            Understand the Indexer
-        </summary>
+    <summary>
+        Understand the Indexer
+    </summary>
 
     </details>
 - 
