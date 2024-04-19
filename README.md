@@ -309,10 +309,10 @@ We use Python and Python SDKs to implement this scenario while the resources are
 ## 1. Create Resources
 1. To create all the resources mentioned in the Terraform section and the settings in the Python section of this repo we created a Bash script for you.
 Clone this repo either to a Linux machine, WSL2 or to the Azure Cloud shell.
-```git clone repolink```
+```git clone https://github.com/benjamintokgoez/AISQLintegratedSearch.git```
 1. Potentially change the region where the resources will be created in `/deployment/deploy.sh` line 4. Be aware that the services are not available in all regions.
 1. Execute the Bash script that applies the terraform template, stores the environment variables and executes the python code. To do so navigate to the repo you cloned and type
-```bash /deployment/deploy.sh```
+```bash /deployment/deploy.sh```. Potentially you need to elevate the script before ```chmod +x /deployment/deploy.sh```
 1. Go to `portal.azure.com`, find your resource group and look at the different resources created. Specifically Azure AI Search, the Index, Indexer, Datasource and Skillset are important. Look at the JSON definitions created here.
 
 ## 2. Test Resources
@@ -325,7 +325,7 @@ The first run of this repo will search for "Einstein" in the data and return the
 ## 3. Adapt Repository
 
 ### Different Search functionalities
-If you have already deployed all the resources and only wish to run a different scenario - eg. use hybrid search instead of only vector search - you have to enter your current PREFIX in the deploy.sh. Additionally you need to navigate to main.py and change the value of enroll to == False and the other variabled accordingly.
+If you have already deployed all the resources and only wish to run a different scenario - eg. use hybrid search instead of only vector search - you have to run the ```.\deployment\logic.sh```. Additionally you need to navigate to **main.py** and change the value of ```enroll = False``` in line 41 and the other variabled accordingly.
 
 ### Different Database
 

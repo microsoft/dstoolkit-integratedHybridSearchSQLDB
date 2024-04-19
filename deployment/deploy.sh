@@ -16,7 +16,7 @@ PREFIX=$(terraform state show random_string.random | grep "id" | awk -F' = ' '{p
 echo prefix=${PREFIX}
 echo sqladmin=${TF_VAR_sqlusername}
 echo sqlpassword=${TF_VAR_sqlpassword}
-export AZURE_SEARCH_KEY=$(az search admin-key show --resource-group ${PREFIX}-aisearch-sql-rg --service-name ${PREFIX}-aisearch --query primaryKey -o tsv | rev | cut -c 2- | rev)
+export AZURE_SEARCH_KEY=$(az search admin-key show --resource-group ${PREFIX}-aisearch-sql-rg --service-name ${PREFIX}-aisearch --query primaryKey -o tsv | tr -d '\r')
 export AZURE_SEARCH_ENDPOINT="https://${PREFIX}-aisearch.search.windows.net"
 export AZURE_SEARCH_INDEX_NAME="aiindex"
 export SQL_SERVER_NAME="${PREFIX}-sqlserver-hybrid.database.windows.net"

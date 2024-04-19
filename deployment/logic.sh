@@ -23,7 +23,7 @@ fi
 
 # Export all needed variables
 PREFIX=${RESOURCE_GROUP:0:8}
-export AZURE_SEARCH_KEY=$(az search admin-key show --resource-group ${PREFIX}-aisearch-sql-rg --service-name ${PREFIX}-aisearch --query primaryKey -o tsv | rev | cut -c 2- | rev)
+export AZURE_SEARCH_KEY=$(az search admin-key show --resource-group ${PREFIX}-aisearch-sql-rg --service-name ${PREFIX}-aisearch --query primaryKey -o tsv | tr -d '\r')
 export AZURE_SEARCH_ENDPOINT="https://${PREFIX}-aisearch.search.windows.net"
 export AZURE_SEARCH_INDEX_NAME="aiindex"
 echo prefix of resource group = $PREFIX
