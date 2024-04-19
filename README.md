@@ -78,7 +78,7 @@ We use Python and Python SDKs to implement this scenario while the resources are
     <summary>
         Understand the Index
     </summary>
-        The index itself is the searchable content in the search engine. The schema as you see below determines which fields are being created within the index and what properties these fields have.
+        The index itself is the searchable content in the search engine. The schema as you see below determines which fields are being created within the index and what properties these fields have. In addition we define the capabilities of the search engine and how it handles search requests. Precisely we define which algorithms to use for general search and vector search. 
 
      ```json
     {  
@@ -93,7 +93,14 @@ We use Python and Python SDKs to implement this scenario while the resources are
                 "facetable": true (default where applicable) | false (Edm.GeographyPoint fields cannot be facetable),
             },
             {
-                "name": "vector", #Needed to write the vector received from OpenAI into
+                "name": "chunk", #Needed to write the chunks into as defined and created in the Skillset.
+                "type": "Edm.String",
+                "searchable": true,
+                "retrievable": true,
+                "stored": true
+            },
+            {
+                "name": "vector", #Needed to write the vector received from OpenAI into as defined in the Skillset
                 "type": "Collection(Edm.Single)",
                 "dimensions": 1536, #Each dimension of the vector captures different aspects of a word's meaning or usage. 1536 is the standard for the model we are using.
                 "vectorSearchProfile": "hnsw-profile",
