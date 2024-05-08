@@ -29,9 +29,6 @@ export OPENAI_API_TYPE="azure"
 export OPENAI_URI="https://$(echo $TF_VAR_region | tr '[:upper:]' '[:lower:]' | tr -d ' ').openai.azure.com/"
 export OPENAI_DEPLOYMENT="adadeployment"
 
-# Move to the parent directory
-cd ..
-
 # Install Python packages
 pip install -r requirements.txt
 
