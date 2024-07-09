@@ -35,7 +35,7 @@ hyrbidsearchsample = True
 vectorsemanticsearchsample = False
 
 #allows you to continuously enter search commands in the console
-app = False
+app = True
 
 #specifies if the user wants (or needs) to create the AI Search configuration for Azure SQL integrated vectorization.
 enroll = True
