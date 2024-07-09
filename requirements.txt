@@ -4,7 +4,7 @@ azure-common==1.1.28
 azure-core==1.30.1
 azure-search==1.0.0b2
 azure-search-documents==11.6.0b2
-certifi==2023.11.17
+certifi==2024.7.4
 charset-normalizer==3.3.2
 distlib==0.3.8
 distro==1.8.0
